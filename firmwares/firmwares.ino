@@ -1,5 +1,12 @@
 // Placa: ESP32 Dev Module - v1.0.3
 // Biblioteca - DHTStable - v1.0.1
+// Biblioteca - WiFi - v1.2.1
+
+// Biblioteca - PubSubClient - v2.4.0
+
+
+#include <WiFi.h>
+#include "config.h"
 
 #include "DHTStable.h"
 
@@ -53,18 +60,46 @@ void readDHTSensor() {
   Serial.print(temp);
 
   Serial.print("\tHumidity: ");
-  Serial.println(humid);  
+  Serial.println(humid);
+}
+
+void setup_wifi() {
+
+  delay(10);
+  // We start by connecting to a WiFi network
+  Serial.println();
+  Serial.print("Connecting to ");
+  Serial.println(SSID);
+
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(SSID, PASSWORD);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.print(WiFi.status());
+    delay(500);
+    Serial.print(".");
+  }
+
+  randomSeed(micros());
+
+  Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
 }
 
 void setup() {
+  Serial.begin(115200);
+  
+  // WIFI
+  setup_wifi();
+
   // MQ2
   pinMode(MQ2_PINOUT, INPUT);
 
-  Serial.begin(115200);
-
   // PIR
   pinMode(PIR_PINOUT, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(PIR_PINOUT), motionDetected, RISING);  
+  attachInterrupt(digitalPinToInterrupt(PIR_PINOUT), motionDetected, RISING);
 }
 
 void loop() {
