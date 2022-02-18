@@ -9,7 +9,10 @@ Crie um arquivo chamado config.h, adicione os seguintes defines e um valor para 
 
  - SSID
  - PASSWORD
-
+ - MQTT_SERVER
+ - MQTT_PORT
+ - MQTT_USER
+ - MQTT_PASSWORD
 
 #### Exemplo
 
