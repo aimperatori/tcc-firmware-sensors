@@ -15,14 +15,16 @@
 #define DHT_PINOUT 4
 
 #define DELAY 2000
-
+#define DELAY_MOV 5000
 
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
 DHTStable DHT;
 
-unsigned long lastMsg = 0;
-boolean movDetec;
+unsigned long lastMsg = 0,
+              lastMov = 0;
+boolean movDetec, 
+        movDetecOff;
 
 
 void IRAM_ATTR motionDetected() 
@@ -34,13 +36,20 @@ void motionDetectedSendMQTT()
 {
   if(movDetec)
   {
-    char movement[1] = {'1'};
-    
-    Serial.println("MOTION DETECTED!!!");
-    mqttClient.publish("movement", movement);
+    Serial.println("MOTION DETECTED ON!");
+    mqttClient.publish("entrada/movimento", "on");
 
     movDetec = false;
-  }  
+    movDetecOff = true;
+    lastMov = millis();
+  }
+}
+
+void sendMotionDetectionOff()
+{
+  Serial.println("MOTION DETECTED OFF!");    
+  mqttClient.publish("entrada/movimento", "off");
+  movDetecOff = false;
 }
 
 void readMQ2Sensor() {
@@ -50,7 +59,7 @@ void readMQ2Sensor() {
   
   Serial.print("MQ2: ");
   Serial.println(gas_smoke);
-  mqttClient.publish("gas_smoke", gas_smoke);
+  mqttClient.publish("cozinha/gas_fumaca", gas_smoke);
 }
 
 void readDHTSensor() {
@@ -79,11 +88,11 @@ void readDHTSensor() {
 
   Serial.print("Temperature: ");
   Serial.print(temp);
-  mqttClient.publish("temperature", temp);
+  mqttClient.publish("cozinha/temperatura", temp);
 
   Serial.print("\tHumidity: ");
   Serial.println(humid);
-  mqttClient.publish("humidity", humid);
+  mqttClient.publish("cozinha/umidade", humid);
 }
 
 void setup_wifi()
@@ -156,6 +165,9 @@ void setup()
 
   // MOVEMENT
   movDetec = false;
+
+  // ON SETUP SET MOVEMENT TO OFF
+  sendMotionDetectionOff();
 }
 
 void loop() 
@@ -175,6 +187,12 @@ void loop()
     readMQ2Sensor();
 
     readDHTSensor();    
+  }
+
+
+  if (movDetecOff && now - lastMov > DELAY_MOV)
+  {
+    sendMotionDetectionOff();
   }
 
   motionDetectedSendMQTT();
